@@ -351,13 +351,48 @@ const timezones = [
   'Africa/Johannesburg'
 ]
 
+function addZero(s){
+	return String(s).padStart(2, '0')
+}
+
 export default async function handler(req, res) {
 	
+	// "timezone": "EDT",
+	// "hour": "09",
+	// "minute": "39",
+	// "second": "59",
+	// "ampm": "AM",
+	// "date": "3/19/2022",
+	// "dayofweek": "Saturday",
+
 	if (req.method == 'GET') {
 		const timezone = req.query.timezone
 		if ( timezones.includes(timezone) ){
-			const dateString = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' })).toISOString()
-			res.status(200).send({ status: 'Success', data: dateString})
+			const currentTime = new Date(new Date().toLocaleString('en', { timeZone: timezone }))
+			if (req.query.format == 1){
+				//const abbr = currentTime.toLocaleString('en', {timeZone: timezone, timeZoneName:'short'}).split(' ').pop()
+				const abbr = currentTime.toLocaleTimeString('en-us',{timeZone: timezone, timeZoneName:'short'}).split(' ')[2]
+				
+				const h = addZero(currentTime.getHours())
+				const m = addZero(currentTime.getMinutes())
+				const s = addZero(currentTime.getSeconds())
+				const ampm = (currentTime.getHours() >= 12) ? "PM" : "AM"
+				
+				//console.log(abbr, h, m, s, ampm)
+				
+				var dd = addZero(currentTime.getDate())
+				var mm = addZero(currentTime.getMonth() + 1)
+				var yyyy = currentTime.getFullYear()
+				const date = mm + '/' + dd + '/' + yyyy
+				
+				const dayofweek = currentTime.toLocaleString("en", { weekday: "long" })
+				
+				const dateObj = {timezone: abbr, hour: h, minute: m, second: s, ampm: ampm, date: date, dayofweek: dayofweek}
+				res.status(200).send({ status: 'Success', data: dateObj})
+			}else{		
+				const dateString = currentTime.toISOString()
+				res.status(200).send({ status: 'Success', data: dateString})
+			}
 		}else{
 			res.status(400).send({ status: 'Failed', message: 'Timezone parameter must be valid' })
 		}
